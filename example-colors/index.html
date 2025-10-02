@@ -1,0 +1,383 @@
+<!doctype html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+        <title>Babylon.js sample code</title>
+
+        <!-- Babylon.js -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+        <script src="https://cdn.babylonjs.com/recast.js"></script>
+        <script src="https://cdn.babylonjs.com/ammo.js"></script>
+        <script src="https://cdn.babylonjs.com/havok/HavokPhysics_umd.js"></script>
+        <script src="https://cdn.babylonjs.com/cannon.js"></script>
+        <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+        <script src="https://cdn.babylonjs.com/earcut.min.js"></script>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://cdn.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/addons/babylonjs.addons.min.js"></script>
+        <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+        <style>
+            html,
+            body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+
+            #canvasZone {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="canvasZone"><canvas id="renderCanvas"></canvas></div>
+        <script>
+                    var canvas = document.getElementById("renderCanvas");
+
+                    var startRenderLoop = function (engine, canvas) {
+                        engine.runRenderLoop(function () {
+                            if (sceneToRender && sceneToRender.activeCamera) {
+                                sceneToRender.render();
+                            }
+                        });
+                    }
+
+                    var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var createDefaultEngine = function() { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true,  disableWebGL2Support: false}); };
+        //The PG is for testing WebXR controller input
+//Thanks for "https://www.babylonjs-playground.com/#F41V6N#134"
+
+var createScene = async function () {
+
+    var scene = new BABYLON.Scene(engine);
+    var camera = new BABYLON.FreeCamera("camera1", new BABYLON.Vector3(0, 5, -6), scene);
+    camera.setTarget(BABYLON.Vector3.Zero());
+    camera.attachControl(canvas, true);
+    var light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(0, 1, 0), scene);
+    light.intensity = 0.7;
+  //  var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+  //  sphere.position.y = 1;
+
+
+    // Default Environment
+    var environment = scene.createDefaultEnvironment({ enableGroundShadow: true });
+    environment.setMainColor(BABYLON.Color3.FromHexString("#74b9ff"))
+    environment.ground.parent.position.y = 0;
+    environment.ground.position.y = 0
+
+
+
+
+
+    var Box_Left_Trigger = BABYLON.MeshBuilder.CreateBox("Box_Left_Trigger",{},scene);
+    Box_Left_Trigger.position = new BABYLON.Vector3(-2.5,1,3);
+
+
+
+    var Box_Left_Squeeze = BABYLON.MeshBuilder.CreateBox("Box_Left_Squeeze",{},scene);
+    Box_Left_Squeeze.position = new BABYLON.Vector3(-2.5,-1,3);
+
+    var Sphere_Left_YButton = BABYLON.MeshBuilder.CreateSphere("Sphere_Left_YButton", {diameter:1}, scene);
+    Sphere_Left_YButton.position = new BABYLON.Vector3(-2,0,3);
+
+    var Sphere_Left_XButton = BABYLON.MeshBuilder.CreateSphere("Sphere_Left_XButton", {diameter:1}, scene);
+    Sphere_Left_XButton.position = new BABYLON.Vector3(-2,0,2);
+
+
+    var Box_Left_ThumbStick = BABYLON.MeshBuilder.CreateBox("Box_Left_ThumbStick",{size:0.5},scene);
+    Box_Left_ThumbStick.position = new BABYLON.Vector3(-1,0,1);
+
+
+    var Box_Right_Trigger = BABYLON.MeshBuilder.CreateBox("Box_Right_Trigger",{},scene);
+    Box_Right_Trigger.position = new BABYLON.Vector3(2.5,1,3);
+
+    var Box_Right_Squeeze = BABYLON.MeshBuilder.CreateBox("Box_Right_Squeeze",{},scene);
+    Box_Right_Squeeze.position = new BABYLON.Vector3(2.5,-1,3);
+
+    var Sphere_Right_BButton = BABYLON.MeshBuilder.CreateSphere("Sphere_Right_BButton", {diameter:1}, scene);
+    Sphere_Right_BButton.position = new BABYLON.Vector3(2,0,3);
+
+    var Sphere_Right_AButton = BABYLON.MeshBuilder.CreateSphere("Sphere_Right_AButton", {diameter:1}, scene);
+    Sphere_Right_AButton.position = new BABYLON.Vector3(2,0,2);
+
+    var Box_Right_ThumbStick = BABYLON.MeshBuilder.CreateBox("Box_Right_ThumbStick",{size:0.5},scene);
+    Box_Right_ThumbStick.position = new BABYLON.Vector3(1,0,1);
+
+    var xr = await scene.createDefaultXRExperienceAsync({
+      //  xrInput: defaultXRExperience.input,
+  //      floorMeshes: [environment.ground] /* Array of meshes to be used as landing points */
+    });
+/*
+    var webXRInput = await xr.input;
+
+    xr.baseExperience.onStateChangedObservable.add(function (state: BABYLON.WebXRState) {
+            switch (state) {
+                case BABYLON.WebXRState.IN_XR:
+                case BABYLON.WebXRState.ENTERING_XR:
+                    webXRInput.xrCamera.position = BABYLON.Vector3.Zero();
+                    webXRInput.xrCamera.position.z = -10;
+                    webXRInput.xrCamera.position.y = 2;
+                    webXRInput.xrCamera.rotationQuaternion = BABYLON.Quaternion.Identity();
+                    break;
+            }
+        });
+*/
+
+//controller input
+   xr.input.onControllerAddedObservable.add((controller) => {
+       controller.onMotionControllerInitObservable.add((motionController) => {
+           if (motionController.handness === 'left') {
+                const xr_ids = motionController.getComponentIds();
+                let triggerComponent = motionController.getComponent(xr_ids[0]);//xr-standard-trigger
+                triggerComponent.onButtonStateChangedObservable.add(() => {
+                    if (triggerComponent.pressed) {
+                        Box_Left_Trigger.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Box_Left_Trigger.material = new BABYLON.StandardMaterial("Box_Left_Trigger_Red", scene);
+                        Box_Left_Trigger.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+                    
+                    }else{
+                        Box_Left_Trigger.scaling= new BABYLON.Vector3(1,1,1);
+                    
+                    }
+                });
+                let squeezeComponent = motionController.getComponent(xr_ids[1]);//xr-standard-squeeze
+                squeezeComponent.onButtonStateChangedObservable.add(() => {
+                    if (squeezeComponent.pressed) {
+                        Box_Left_Squeeze.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Box_Left_Squeeze.material = new BABYLON.StandardMaterial("Box_Left_Squeeze_Red", scene);
+                        Box_Left_Squeeze.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+                     
+                    }else{
+                        Box_Left_Squeeze.scaling=new BABYLON.Vector3(1,1,1);
+                    }
+                });
+                let thumbstickComponent = motionController.getComponent(xr_ids[2]);//xr-standard-thumbstick
+                thumbstickComponent.onButtonStateChangedObservable.add(() => {
+                    if (thumbstickComponent.pressed) {
+                        Box_Left_ThumbStick.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Box_Left_ThumbStick.material = new BABYLON.StandardMaterial("Box_Left_ThumbStick_Red", scene);
+                        Box_Left_ThumbStick.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+        
+                    }else{
+                        Box_Left_ThumbStick.scaling=new BABYLON.Vector3(1,1,1);
+                    }
+                /*
+                    let axes = thumbstickComponent.axes;
+                    Box_Left_ThumbStick.position.x += axes.x;
+                    Box_Left_ThumbStick.position.y += axes.y;
+                */
+                });
+                thumbstickComponent.onAxisValueChangedObservable.add((axes) => {
+                    //https://playground.babylonjs.com/#INBVUY#87
+                    //inactivate camera rotation : not working so far
+
+                    /*
+                    let rotationValue = 0;
+                    const matrix = new BABYLON.Matrix();
+                    let deviceRotationQuaternion = webXRInput.xrCamera.getDirection(BABYLON.Axis.Z).toQuaternion(); // webXRInput.xrCamera.rotationQuaternion;
+                    var angle = rotationValue * (Math.PI / 8);
+                    var quaternion = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, angle);
+                    const move = new BABYLON.Vector3(0,0,0);
+                    deviceRotationQuaternion = deviceRotationQuaternion.multiply(quaternion);
+                    BABYLON.Matrix.FromQuaternionToRef(deviceRotationQuaternion, matrix);
+                    const addPos = BABYLON.Vector3.TransformCoordinates(move, matrix);
+                    addPos.y = 0;
+
+                    webXRInput.xrCamera.position = webXRInput.xrCamera.position.add(addPos);
+                   // webXRInput.xrCamera.rotationQuaternion = BABYLON.Quaternion.Identity();
+                    
+                    //webXRInput.xrCamera.rotation = new BABYLON.Vector3(0,0,0);
+                    */
+                    //Box_Left_ThumbStick is moving according to stick axes but camera rotation is also changing..
+                   // Box_Left_ThumbStick.position.x += (axes.x)/100;
+                  //  Box_Left_ThumbStick.position.y -= (axes.y)/100;
+                   // console.log(values.x, values.y);
+                });
+
+                let xbuttonComponent = motionController.getComponent(xr_ids[3]);//x-button
+                xbuttonComponent.onButtonStateChangedObservable.add(() => {
+                    if (xbuttonComponent.pressed) {
+                        Sphere_Left_XButton.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Sphere_Left_XButton.material = new BABYLON.StandardMaterial("Sphere_Left_XButton_Red", scene);
+                        Sphere_Left_XButton.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+                    }else{
+                        Sphere_Left_XButton.scaling=new BABYLON.Vector3(1,1,1);  
+                    }
+                });
+                let ybuttonComponent = motionController.getComponent(xr_ids[4]);//y-button
+                ybuttonComponent.onButtonStateChangedObservable.add(() => {
+                    if (ybuttonComponent.pressed) {
+                        Sphere_Left_YButton.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Sphere_Left_YButton.material = new BABYLON.StandardMaterial("Sphere_Left_YButton_Red", scene);
+                        Sphere_Left_YButton.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+                       
+                    }else{
+                        Sphere_Left_YButton.scaling=new BABYLON.Vector3(1,1,1);  
+                    }
+                });
+                /* not worked.
+                let thumbrestComponent = motionController.getComponent(xr_ids[5]);//thumrest
+                thumbrestComponent.onButtonStateChangedObservable.add(() => {
+                    //not worked
+                    if ((thumbrestComponent.value>0.1&&thumbrestComponent.value<0.6) {
+                        sphere1.position.y=10;
+                    }
+                    if(thumbrestComponent.touched){
+                         sphere1.position.y=10;
+                    }
+
+                });  
+                */              
+           }
+           if (motionController.handness === 'right') {
+                const xr_ids = motionController.getComponentIds();
+                let triggerComponent = motionController.getComponent(xr_ids[0]);//xr-standard-trigger
+                triggerComponent.onButtonStateChangedObservable.add(() => {
+                    if (triggerComponent.pressed) {
+                        Box_Right_Trigger.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Box_Right_Trigger.material = new BABYLON.StandardMaterial("Box_Right_Trigger_Blue", scene);
+                        Box_Right_Trigger.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+                    
+                    }else{
+                        Box_Right_Trigger.scaling= new BABYLON.Vector3(1,1,1);
+                    
+                    }
+                });
+                let squeezeComponent = motionController.getComponent(xr_ids[1]);//xr-standard-squeeze
+                squeezeComponent.onButtonStateChangedObservable.add(() => {
+                    if (squeezeComponent.pressed) {
+                        Box_Right_Squeeze.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Box_Right_Squeeze.material = new BABYLON.StandardMaterial("Box_Right_Squeeze_Blue", scene);
+                        Box_Right_Squeeze.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+                    }else{
+                        Box_Right_Squeeze.scaling=new BABYLON.Vector3(1,1,1);
+                    }
+                });
+                let thumbstickComponent = motionController.getComponent(xr_ids[2]);//xr-standard-thumbstick
+                thumbstickComponent.onButtonStateChangedObservable.add(() => {
+                    if (thumbstickComponent.pressed) {
+                        Box_Right_ThumbStick.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Box_Right_ThumbStick.material = new BABYLON.StandardMaterial("Box_Right_ThumbStick_Blue", scene);
+                        Box_Right_ThumbStick.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+
+                    }else{
+                        Box_Right_ThumbStick.scaling=new BABYLON.Vector3(1,1,1);
+                    }
+
+                });
+                thumbstickComponent.onAxisValueChangedObservable.add((axes) => {
+                    //Box_Right_ThumbStick is moving according to stick axes but camera rotation is also changing..
+                   // Box_Right_ThumbStick.position.x += (axes.x)/100;
+                   // Box_Right_ThumbStick.position.y += (axes.y)/100;
+                   // console.log(values.x, values.y);
+                });
+
+                let abuttonComponent = motionController.getComponent(xr_ids[3]);//a-button
+                abuttonComponent.onButtonStateChangedObservable.add(() => {
+                    if (abuttonComponent.pressed) {
+                        Sphere_Right_AButton.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Sphere_Right_AButton.material = new BABYLON.StandardMaterial("Sphere_Right_AButton_Blue", scene);
+                        Sphere_Right_AButton.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+
+
+                    }else{
+                        Sphere_Right_AButton.scaling=new BABYLON.Vector3(1,1,1);  
+                    }
+                });
+                let bbuttonComponent = motionController.getComponent(xr_ids[4]);//b-button
+                bbuttonComponent.onButtonStateChangedObservable.add(() => {
+                    if (bbuttonComponent.pressed) {
+                        Sphere_Right_BButton.scaling= new BABYLON.Vector3(1.2,1.2,1.2);
+                        Sphere_Right_BButton.material = new BABYLON.StandardMaterial("Sphere_Right_BButton_Blue", scene);
+                        Sphere_Right_BButton.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+                       
+                    }else{
+                        Sphere_Right_BButton.scaling=new BABYLON.Vector3(1,1,1);  
+                    }
+                });
+                /* not worked.
+                let thumbrestComponent = motionController.getComponent(xr_ids[5]);//thumrest
+                thumbrestComponent.onButtonStateChangedObservable.add(() => {
+                    //not worked
+                    if ((thumbrestComponent.value>0.1&&thumbrestComponent.value<0.6) {
+                        sphere1.position.y=10;
+                    }
+                    if(thumbrestComponent.touched){
+                         sphere1.position.y=10;
+                    }
+
+                });  
+                */              
+  
+               /*
+                const xr_ids = motionController.getComponentIds();
+                for (let i=0;i<xr_ids.length;i++){
+                    console.log("right:"+xr_ids[i]);
+                }
+               */
+           }
+
+       })
+
+   });
+
+    return scene;
+};
+                window.initFunction = async function() {
+                    
+                    
+                    
+                    var asyncEngineCreation = async function() {
+                        try {
+                        return createDefaultEngine();
+                        } catch(e) {
+                        console.log("the available createEngine function failed. Creating the default engine instead");
+                        return createDefaultEngine();
+                        }
+                    }
+
+                    window.engine = await asyncEngineCreation();
+                    
+                    const engineOptions = window.engine.getCreationOptions?.();
+                    if (!engineOptions || engineOptions.audioEngine !== false) {
+                        
+                    }
+        if (!engine) throw 'engine should not be null.';
+        startRenderLoop(engine, canvas);
+        window.scene = createScene();};
+        initFunction().then(() => {scene.then(returnedScene => { sceneToRender = returnedScene; });
+        
+                    });
+
+                    // Resize
+                    window.addEventListener("resize", function () {
+                        engine.resize();
+                    });
+        </script>
+    </body>
+</html>
